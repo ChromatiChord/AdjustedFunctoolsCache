@@ -1,4 +1,4 @@
-﻿# AdjustedFunctoolsCache
+﻿# Adjusted Functools Cache
 
 By default, the Cache functionality of the functools python module looks at all arguments of a wrapped function to determine if the result should be cached or extracted from the cache. 
 For example, when the function 'func()' is wrapped by the functools cache decorator:
