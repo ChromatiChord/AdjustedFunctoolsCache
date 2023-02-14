@@ -1,13 +1,19 @@
 """Adjusted Functools Cache.py - Tools for working with functions and callable objects
 """
-# Python module wrapper for _new_cache C module
+
+# Upgrade to the functools Cache module that allows 
+# one to input the number of function parameters 
+# observed by the Cache
+
+# --- ORIGINAL SOURCE ---
+# Python module wrapper for _functools C module
 # to allow utilities written in Python to be added
 # to the new_cache module.
 # Written by Nick Coghlan <ncoghlan at gmail.com>,
 # Raymond Hettinger <python at rcn.com>,
 # and Łukasz Langa <lukasz at langa.pl>.
 #   Copyright (C) 2006-2013 Python Software Foundation.
-# See C source code for _new_cache credits/copyright
+# See C source code for _functools credits/copyright
 
 __all__ = ['update_wrapper', 'wraps', 'WRAPPER_ASSIGNMENTS', 'WRAPPER_UPDATES',
            'total_ordering', 'cache', 'cmp_to_key', 'lru_cache', 'reduce',
@@ -404,7 +410,7 @@ def _lru_cache_wrapper(user_function, maxsize, typed, arg_num, _CacheInfo):
     return wrapper
 
 try:
-    from _new_cache import _lru_cache_wrapper
+    from _functools import _lru_cache_wrapper
 except ImportError:
     pass
 
