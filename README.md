@@ -8,7 +8,7 @@ def func(value, list, dummy_string):
   ...
 ```
 
-All calls to f with the same value AND list AND dummy_string will be extracted from the cache. i.e. Once:
+All calls to func with the same value AND list AND dummy_string will be extracted from the cache. i.e. Once:
   ```
   func(5, [], "dummy")
   ```
