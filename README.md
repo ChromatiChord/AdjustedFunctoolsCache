@@ -1,6 +1,7 @@
 ﻿# AdjustedFunctoolsCache
 
-By default, the Functools Cache looks at all arguments of a wrapped function for results to remember. For example, when the function 'func()' is wrapped by the functools cache decorator:
+By default, the Cache functionality of the functools python module looks at all arguments of a wrapped function to determine if the result should be cached or extracted from the cache. 
+For example, when the function 'func()' is wrapped by the functools cache decorator:
 
 ```
 @lru_cache(maxsize=None)  
@@ -8,18 +9,21 @@ def func(value, list, dummy_string):
   ...
 ```
 
-All calls to func with the same value AND list AND dummy_string will be extracted from the cache. i.e. Once:
+All calls to func with the same value AND list AND dummy_string will be extracted from the cache. 
+i.e. Once:
   ```
   func(5, [], "dummy")
   ```
-is called, the output will be stored in memory (cached). Calling 
+is called, the output will be stored in memory (cached). 
+Calling 
   ```
   func(5, [], "dummy")
   ```
 again will not re-run the function, instead it will just check the result it got from the cache previously.
 
 
-However, what if we only wanted to only check a subset of function parameters for caching? For example:
+However, what if we only wanted to only check a subset of function parameters for caching? 
+For example:
   ```
   func(3, [], "HELLO")
   ```
