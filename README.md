@@ -2,9 +2,9 @@
 
 By default, the Functools Cache looks at all arguments of a wrapped function for results to remember. For example, when the function 'func()' is wrapped by the functools cache decorator:
 
-@lru_cache(maxsize=None)  
-def func(value, list, dummy_string):
-  ...
+  @lru_cache(maxsize=None)  
+    def func(value, list, dummy_string):
+      ...
   
 All calls to f with the same value AND list AND dummy_string will be extracted from the cache. i.e. Once:
   func(5, [], "dummy")
