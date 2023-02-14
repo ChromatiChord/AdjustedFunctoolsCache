@@ -15,14 +15,14 @@ i.e. Once:
   func(5, [], "dummy")
   ```
 is called, the output will be stored in memory (cached).  
-Calling 
+Calling:
   ```
   func(5, [], "dummy")
   ```
 again will not re-run the function, instead it will just check the result it got from the cache previously.
 
 
-However, what if we only wanted to only check a subset of function parameters for caching? 
+However, what if we only wanted to only check a subset of function parameters for caching?  
 For example:
   ```
   func(3, [], "HELLO")
