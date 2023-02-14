@@ -9,12 +9,12 @@ def func(int_value, list_value, string_value):
   ...
 ```
 
-Only calls to func with the same 'int_value' AND 'list_value' AND 'string_value' will be extracted from the cache. 
+Only calls to func with the same 'int_value' AND 'list_value' AND 'string_value' will be extracted from the cache.  
 i.e. Once:
   ```
   func(5, [], "dummy")
   ```
-is called, the output will be stored in memory (cached). 
+is called, the output will be stored in memory (cached).  
 Calling 
   ```
   func(5, [], "dummy")
