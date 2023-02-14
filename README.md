@@ -5,11 +5,11 @@ For example, when the function 'func()' is wrapped by the functools cache decora
 
 ```
 @lru_cache(maxsize=None)  
-def func(value, list, dummy_string):
+def func(int_value, list_value, string_value):
   ...
 ```
 
-All calls to func with the same value AND list AND dummy_string will be extracted from the cache. 
+All calls to func with the same 'int_value' AND 'list_value' AND 'string_value' will be extracted from the cache. 
 i.e. Once:
   ```
   func(5, [], "dummy")
@@ -37,7 +37,7 @@ With the new feature, by specifying the 'arg_num' parameter in the initial decor
 
 ```
 @lru_cache(maxsize=None, arg_num=2)  
-def func(value, list, dummy_string):
+def func(int_value, list_value, string_value):
   ...
 ```
 
