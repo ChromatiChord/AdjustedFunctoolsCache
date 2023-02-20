@@ -1,4 +1,4 @@
-"""Adjusted Functools Cache.py - Tools for working with functions and callable objects
+"""ChromatiCache.py
 """
 
 # Upgrade to the functools Cache module that allows 
@@ -24,6 +24,7 @@ from collections import namedtuple
 # import types, weakref  # Deferred to single_dispatch()
 from _thread import RLock
 from types import GenericAlias
+import sys
 
 
 ################################################################################
@@ -102,7 +103,7 @@ class _HashedSeq(list):
 def _make_key(args, kwds, typed,
              kwd_mark = (object(),),
              fasttypes = {int, str},
-             tuple=tuple, type=type, len=len, arg_num=None):
+             tuple=tuple, type=type, len=len):
     """Make a cache key from optionally typed positional and keyword arguments
     The key is constructed in a way that is flat as possible rather than
     as a nested structure that would take more memory.
@@ -114,23 +115,52 @@ def _make_key(args, kwds, typed,
     # Formerly, we sorted() the kwds before looping.  The new way is *much*
     # faster; however, it means that f(x=1, y=2) will now be treated as a
     # distinct call from f(y=2, x=1) which will be cached separately.
-    num = [i for i in range(1, len(args))]
-    if arg_num != None and arg_num in range(1, len(args)):
-      args = args[0:arg_num]
-    key = args
+    cache_key = args
     if kwds:
-        key += kwd_mark
+        cache_key += kwd_mark
         for item in kwds.items():
-            key += item
+            cache_key += item
     if typed:
-        key += tuple(type(v) for v in args)
+        cache_key += tuple(type(v) for v in args)
         if kwds:
-            key += tuple(type(v) for v in kwds.values())
-    elif len(key) == 1 and type(key[0]) in fasttypes:
-        return key[0]
-    return _HashedSeq(key)
+            cache_key += tuple(type(v) for v in kwds.values())
+    elif len(cache_key) == 1 and type(cache_key[0]) in fasttypes:
+        return cache_key[0]
+    return _HashedSeq(cache_key)
 
-def lru_cache(maxsize=128, typed=False, arg_num=None):
+def _use_provided_key(args, kwds, key):
+    # TODO add more explicit error messaging
+    if not check_valid_key(key, len(args), kwds):
+        sys.tracebacklimit = 0
+        raise Exception(f"Provided key must either be a string or a tuple of format: (int, [keys_in_kwargs])")
+    if isinstance(key, str):
+        return _HashedSeq((key,))
+    elif isinstance(key, int):
+        return _make_key(args[0:key], {}, False)
+    else:
+        new_args = args[0:key[0]]
+        new_kwds = {x: kwds[x] for x in key[1]}
+        return _make_key(new_args, new_kwds, False)
+
+# the provided key must either be a string, OR an integer OR 
+# a tuple of structure (x, y)
+# where 0 < integer, x < len(args)
+# and y = [keys_in_kwds]
+def check_valid_key(key, args_len, kwds):
+    if isinstance(key, str):
+        return True
+    if isinstance(key, int):
+        return True
+
+    if not isinstance(key, tuple) or len(key) != 2:
+        return False
+    elif not isinstance(key[0], int) or not isinstance(key[1], list):
+        return False
+    elif key[0] <= 0 or key[0] > args_len:
+        return False
+    return all(isinstance(v, str) for v in key[1]) and all(item in kwds for item in key[1])
+
+def lru_cache(maxsize=128, typed=False, key=None):
     """Least-recently-used cache decorator.
     If *maxsize* is set to None, the LRU features are disabled and the cache
     can grow without bound.
@@ -156,7 +186,7 @@ def lru_cache(maxsize=128, typed=False, arg_num=None):
     elif callable(maxsize) and isinstance(typed, bool):
         # The user_function was passed in directly via the maxsize argument
         user_function, maxsize = maxsize, 128
-        wrapper = _lru_cache_wrapper(user_function, maxsize, typed, arg_num, _CacheInfo)
+        wrapper = _lru_cache_wrapper(user_function, maxsize, typed, key, _CacheInfo)
         wrapper.cache_parameters = lambda : {'maxsize': maxsize, 'typed': typed}
         return update_wrapper(wrapper, user_function)
     elif maxsize is not None:
@@ -164,16 +194,17 @@ def lru_cache(maxsize=128, typed=False, arg_num=None):
             'Expected first argument to be an integer, a callable, or None')
 
     def decorating_function(user_function):
-        wrapper = _lru_cache_wrapper(user_function, maxsize, typed, arg_num, _CacheInfo)
+        wrapper = _lru_cache_wrapper(user_function, maxsize, typed, key, _CacheInfo)
         wrapper.cache_parameters = lambda : {'maxsize': maxsize, 'typed': typed}
         return update_wrapper(wrapper, user_function)
 
     return decorating_function
 
-def _lru_cache_wrapper(user_function, maxsize, typed, arg_num, _CacheInfo):
+def _lru_cache_wrapper(user_function, maxsize, typed, key, _CacheInfo):
     # Constants shared by all lru cache instances:
     sentinel = object()          # unique object used to signal cache misses
     make_key = _make_key         # build a key from the function arguments
+    provided_key = _use_provided_key
     PREV, NEXT, KEY, RESULT = 0, 1, 2, 3   # names for the link fields
 
     cache = {}
@@ -199,14 +230,14 @@ def _lru_cache_wrapper(user_function, maxsize, typed, arg_num, _CacheInfo):
         def wrapper(*args, **kwds):
             # Simple caching without ordering or size limit
             nonlocal hits, misses
-            key = make_key(args, kwds, typed, arg_num=arg_num)
-            result = cache_get(key, sentinel)
+            cache_key = make_key(args, kwds, typed) if key == None else provided_key(args, kwds, key)
+            result = cache_get(cache_key, sentinel)
             if result is not sentinel:
                 hits += 1
                 return result
             misses += 1
             result = user_function(*args, **kwds)
-            cache[key] = result
+            cache[cache_key] = result
             return result
 
     else:
@@ -214,9 +245,9 @@ def _lru_cache_wrapper(user_function, maxsize, typed, arg_num, _CacheInfo):
         def wrapper(*args, **kwds):
             # Size limited caching that tracks accesses by recency
             nonlocal root, hits, misses, full
-            key = make_key(args, kwds, typed, arg_num=arg_num)
+            cache_key = make_key(args, kwds, typed) if key == None else provided_key(args, kwds, key)
             with lock:
-                link = cache_get(key)
+                link = cache_get(cache_key)
                 if link is not None:
                     # Move the link to the front of the circular queue
                     link_prev, link_next, _key, result = link
@@ -231,7 +262,7 @@ def _lru_cache_wrapper(user_function, maxsize, typed, arg_num, _CacheInfo):
                 misses += 1
             result = user_function(*args, **kwds)
             with lock:
-                if key in cache:
+                if cache_key in cache:
                     # Getting here means that this same key was added to the
                     # cache while the lock was released.  Since the link
                     # update is already done, we need only return the
@@ -240,7 +271,7 @@ def _lru_cache_wrapper(user_function, maxsize, typed, arg_num, _CacheInfo):
                 elif full:
                     # Use the old root to store the new key and result.
                     oldroot = root
-                    oldroot[KEY] = key
+                    oldroot[KEY] = cache_key
                     oldroot[RESULT] = result
                     # Empty the oldest link and make it the new root.
                     # Keep a reference to the old key and old result to
@@ -257,12 +288,12 @@ def _lru_cache_wrapper(user_function, maxsize, typed, arg_num, _CacheInfo):
                     # Save the potentially reentrant cache[key] assignment
                     # for last, after the root and links have been put in
                     # a consistent state.
-                    cache[key] = oldroot
+                    cache[cache_key] = oldroot
                 else:
                     # Put result in a new link at the front of the queue.
                     last = root[PREV]
-                    link = [last, root, key, result]
-                    last[NEXT] = root[PREV] = cache[key] = link
+                    link = [last, root, cache_key, result]
+                    last[NEXT] = root[PREV] = cache[cache_key] = link
                     # Use the cache_len bound method instead of the len() function
                     # which could potentially be wrapped in an lru_cache itself.
                     full = (cache_len() >= maxsize)
