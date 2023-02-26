@@ -3,23 +3,23 @@
 Adds a *'key'* parameter to the  *functools* python cache module.  
 
 By default, the Cache functionality of the *functools* python module looks at all arguments of a decorated function to determine if the result should be cached or extracted from the cache. 
-For example, when the function 'func()' is wrapped by the functools cache decorator:
+For example, when the function 'some_function()' is wrapped by the functools cache decorator:
 
 ```
 @functools.lru_cache(maxsize=None)  
-def func(int_value, list_value, string_value):
+def some_function(int_value, list_value, string_value):
   ...
 ```
 
-Only calls to func() with the same 'int_value' **and** 'list_value' **and** 'string_value' will be extracted from the cache.  
+Only calls to some_function() with the same 'int_value' **and** 'list_value' **and** 'string_value' will be extracted from the cache.  
 i.e. Once:
   ```
-  func(5, [], "dummy")
+  some_function(5, [], "dummy")
   ```
 is called, the output will be stored in memory (cached).  
 Calling:
   ```
-  func(5, [], "dummy")
+  some_function(5, [], "dummy")
   ```
 again will not re-run the function, instead it will just check the result it got from the cache previously.
 
@@ -27,11 +27,11 @@ again will not re-run the function, instead it will just check the result it got
 However, what if we only wanted to only check a subset of function parameters for caching?  
 For example:
   ```
-  func(3, [], "HELLO")
+  some_function(3, [], "HELLO")
   ```
 and
   ```
-  func(3, [], "GOODBYE")
+  some_function(3, [], "GOODBYE")
   ```
 Would be cached as different results, even if we might not want them to be. 
 
