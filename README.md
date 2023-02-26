@@ -42,16 +42,16 @@ If the supplied key argument is only an integer, then only that subset of the fu
 
 ```
 @chromaticache.lru_cache(maxsize=None, key=2)  
-def func(int_value, list_value, string_value):
+def some_function(int_value, list_value, string_value):
   ...
 ```
 
 Now:
   ```
-  func(3, [], "HELLO")
+  some_function(3, [], "HELLO")
   ```
 and
   ```
-  func(3, [], "GOODBYE")
+  some_function(3, [], "GOODBYE")
   ```
 Will be cached as having the same result!
