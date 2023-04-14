@@ -35,7 +35,7 @@ and
   ```
 Would be cached as different results, even if we might not want them to be. 
 
-With the new feature, by specifying the *'key'* parameter in the initial decorator, the user gains finer controler over how the function's key is stored. 
+With the new feature, by specifying the *'key'* parameter in the initial decorator, the user gains finer control over how the function's key is stored. 
 
 ### Inputting an integer as a key
 If the supplied key argument is only an integer, then only that subset of the function arguments are looked at when caching. So now at setup, we can specify that we only want the first two arguments to be cached:
